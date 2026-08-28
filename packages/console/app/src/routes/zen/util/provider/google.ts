@@ -37,7 +37,6 @@ export const googleHelper: ProviderHelper = ({ providerModel }) => ({
     return body
   },
   createBinaryStreamDecoder: () => undefined,
-  streamSeparator: "\r\n\r\n",
   createUsageParser: () => {
     let usage: Usage
 
@@ -58,6 +57,7 @@ export const googleHelper: ProviderHelper = ({ providerModel }) => ({
       retrieve: () => usage,
     }
   },
+  extractUsage: (response: any) => response.usageMetadata,
   normalizeUsage: (usage: Usage) => {
     const inputTokens = usage.promptTokenCount ?? 0
     const outputTokens = usage.candidatesTokenCount ?? 0
@@ -65,7 +65,7 @@ export const googleHelper: ProviderHelper = ({ providerModel }) => ({
     const cacheReadTokens = usage.cachedContentTokenCount ?? 0
     return {
       inputTokens: inputTokens - cacheReadTokens,
-      outputTokens,
+      outputTokens: outputTokens + reasoningTokens,
       reasoningTokens,
       cacheReadTokens,
       cacheWrite5mTokens: undefined,

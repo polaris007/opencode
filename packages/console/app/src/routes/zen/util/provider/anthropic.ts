@@ -139,7 +139,6 @@ export const anthropicHelper: ProviderHelper = ({ reqModel, providerModel }) => 
         return encoder.encode(messages.join(""))
       }
     },
-    streamSeparator: "\n\n",
     createUsageParser: () => {
       let usage: Usage
 
@@ -175,6 +174,7 @@ export const anthropicHelper: ProviderHelper = ({ reqModel, providerModel }) => 
         retrieve: () => usage,
       }
     },
+    extractUsage: (response: any) => response.usage,
     normalizeUsage: (usage: Usage) => ({
       inputTokens: usage.input_tokens ?? 0,
       outputTokens: usage.output_tokens ?? 0,

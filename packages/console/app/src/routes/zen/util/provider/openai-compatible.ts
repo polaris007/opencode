@@ -37,7 +37,6 @@ export const oaCompatHelper: ProviderHelper = ({ adjustCacheUsage }) => ({
     }
   },
   createBinaryStreamDecoder: () => undefined,
-  streamSeparator: "\n\n",
   createUsageParser: () => {
     let usage: Usage
 
@@ -58,6 +57,7 @@ export const oaCompatHelper: ProviderHelper = ({ adjustCacheUsage }) => ({
       retrieve: () => usage,
     }
   },
+  extractUsage: (response: any) => response.usage,
   normalizeUsage: (usage: Usage) => {
     let inputTokens = usage.prompt_tokens ?? 0
     const outputTokens = usage.completion_tokens ?? 0

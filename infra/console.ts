@@ -1,6 +1,8 @@
-import { domain } from "./stage"
+import { deployAws, domain } from "./stage"
 import { EMAILOCTOPUS_API_KEY } from "./app"
 import { SECRET } from "./secret"
+
+const lake = deployAws ? await import("./lake") : undefined
 
 ////////////////
 // DATABASE
@@ -240,7 +242,7 @@ const SALESFORCE_INSTANCE_URL = new sst.Secret("SALESFORCE_INSTANCE_URL")
 
 const logProcessor = new sst.cloudflare.Worker("LogProcessor", {
   handler: "packages/console/function/src/log-processor.ts",
-  link: [new sst.Secret("HONEYCOMB_API_KEY")],
+  link: [SECRET.HoneycombApiKey, ...(lake?.lakeIngest ? [lake.lakeIngest] : [])],
 })
 
 new sst.cloudflare.x.SolidStart("Console", {
@@ -250,8 +252,11 @@ new sst.cloudflare.x.SolidStart("Console", {
     bucket,
     bucketNew,
     database,
+    SECRET.UpstashRedisRestUrl,
+    SECRET.UpstashRedisRestToken,
     AUTH_API_URL,
     STRIPE_WEBHOOK_SECRET,
+    SECRET.SupportApiKey,
     DISCORD_INCIDENT_WEBHOOK_URL,
     SECRET.HoneycombWebhookSecret,
     STRIPE_SECRET_KEY,
@@ -281,10 +286,14 @@ new sst.cloudflare.x.SolidStart("Console", {
   },
   transform: {
     server: {
-      placement: { region: "aws:us-east-1" },
+      placement: { region: "aws:us-east-2" },
       transform: {
-        worker: {
-          tailConsumers: [{ service: logProcessor.nodes.worker.scriptName }],
+        worker: (args) => {
+          args.compatibilityFlags = $resolve(args.compatibilityFlags).apply((flags) => [
+            ...(flags ?? []),
+            "global_fetch_strictly_public",
+          ])
+          args.tailConsumers = [{ service: logProcessor.nodes.worker.scriptName }]
         },
       },
     },
